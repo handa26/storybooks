@@ -33,8 +33,8 @@ router.get("/", ensureAuth, async (req, res) => {
       .lean();
 
     res.render("stories/index", {
-      stories
-    })
+      stories,
+    });
   } catch (err) {
     console.log(err);
     res.render("error/500");
@@ -45,17 +45,15 @@ router.get("/", ensureAuth, async (req, res) => {
 // @route   GET /stories/:id
 router.get("/:id", ensureAuth, async (req, res) => {
   try {
-    let story = await Story.findById(req.params.id)
-      .populate("user")
-      .lean();
+    let story = await Story.findById(req.params.id).populate("user").lean();
 
     if (!story) {
       return res.render("error/404");
     }
 
     res.render("stories/show", {
-      story
-    })
+      story,
+    });
   } catch (err) {
     console.error(err);
     res.render("error/404");
@@ -66,27 +64,26 @@ router.get("/:id", ensureAuth, async (req, res) => {
 // @route   GET /stories/edit/:id
 router.get("/edit/:id", ensureAuth, async (req, res) => {
   try {
-     const story = await Story.findOne({
-       _id: req.params.id,
-     }).lean();
+    const story = await Story.findOne({
+      _id: req.params.id,
+    }).lean();
 
-     if (!story) {
-       return res.render("error/404");
-     }
+    if (!story) {
+      return res.render("error/404");
+    }
 
-     // Check if the he/she is the actual owner
-     if (story.user != req.user.id) {
-       res.redirect("/stories");
-     } else {
-       res.render("stories/edit", {
-         story,
-       });
-     }
+    // Check if the he/she is the actual owner
+    if (story.user != req.user.id) {
+      res.redirect("/stories");
+    } else {
+      res.render("stories/edit", {
+        story,
+      });
+    }
   } catch (err) {
     console.error(err);
     return res.render("error/500");
   }
- 
 });
 
 // @desc    Update story
@@ -109,7 +106,7 @@ router.put("/:id", ensureAuth, async (req, res) => {
       });
 
       res.redirect("/dashboard");
-    } 
+    }
   } catch (err) {
     console.error(err);
     return res.render("error/500");
@@ -120,12 +117,22 @@ router.put("/:id", ensureAuth, async (req, res) => {
 // @route   DELETE /stories/:id
 router.delete("/:id", ensureAuth, async (req, res) => {
   try {
-    await Story.remove({ _id: req.params.id });
-    res.redirect("/dashboard");
+    const story = await Story.findById({ _id: req.params.id }).lean();
+
+    if (!story) {
+      return res.render("error/404");
+    }
+
+    if (story.user != req.user.id) {
+      res.redirect("/stories");
+    } else {
+      await Story.remove({ _id: req.params.id });
+      res.redirect("/dashboard");
+    }
   } catch (err) {
     console.error(err);
     return res.render("error/500");
-  } 
+  }
 });
 
 // @desc    User stories
@@ -134,14 +141,14 @@ router.get("/user/:userId", ensureAuth, async (req, res) => {
   try {
     const stories = await Story.find({
       user: req.params.userId,
-      status: "public"
+      status: "public",
     })
-    .populate("user")
-    .lean();
+      .populate("user")
+      .lean();
 
     res.render("stories/index", {
-      stories
-    })
+      stories,
+    });
   } catch (err) {
     console.error(err);
     res.render("error/500");
